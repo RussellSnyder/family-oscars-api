@@ -2,14 +2,16 @@ require 'rails_helper'
 
 RSpec.describe 'Nomination API' do
   # Initialize the test data
-  let!(:category) { create(:category) }
+  let(:user) { create(:user) }
+  let!(:category) { create(:category, created_by: user.id ) }
   let!(:nominations) { create_list(:nomination, 20, category_id: category.id) }
   let(:category_id) { category.id }
   let(:id) { nominations.first.id }
+  let(:headers) { valid_headers }
 
   # Test suite for GET /categories/:category_id/nominations
   describe 'GET /categories/:category_id/nominations' do
-    before { get "/categories/#{category_id}/nominations" }
+    before { get "/categories/#{category_id}/nominations", params: {}, headers: headers }
 
     context 'when category exists' do
       it 'returns status code 200' do
@@ -36,7 +38,7 @@ RSpec.describe 'Nomination API' do
 
   # Test suite for GET /categories/:category_id/nominations/:id
   describe 'GET /categories/:category_id/nominations/:id' do
-    before { get "/categories/#{category_id}/nominations/#{id}" }
+    before { get "/categories/#{category_id}/nominations/#{id}", params: {}, headers: headers }
 
     context 'when category nomination exists' do
       it 'returns status code 200' do
@@ -63,10 +65,10 @@ RSpec.describe 'Nomination API' do
 
   # Test suite for PUT /categories/:category_id/nominations
   describe 'POST /categories/:category_id/nominations' do
-    let(:valid_attributes) { { title: 'Visit Narnia', created_by: '2' } }
+    let(:valid_attributes) { { title: 'Visit Narnia', created_by: '2' }.to_json }
 
     context 'when request attributes are valid' do
-      before { post "/categories/#{category_id}/nominations", params: valid_attributes }
+      before { post "/categories/#{category_id}/nominations", params: valid_attributes, headers: headers }
 
       it 'returns status code 201' do
         expect(response).to have_http_status(201)
@@ -74,7 +76,7 @@ RSpec.describe 'Nomination API' do
     end
 
     context 'when an invalid request' do
-      before { post "/categories/#{category_id}/nominations", params: {} }
+      before { post "/categories/#{category_id}/nominations", params: {}, headers: headers }
 
       it 'returns status code 422' do
         expect(response).to have_http_status(422)
@@ -88,9 +90,9 @@ RSpec.describe 'Nomination API' do
 
   # Test suite for PUT /categories/:category_id/nominations/:id
   describe 'PUT /categories/:category_id/nominations/:id' do
-    let(:valid_attributes) { { title: 'Mozart' } }
+    let(:valid_attributes) { { title: 'Mozart' }.to_json }
 
-    before { put "/categories/#{category_id}/nominations/#{id}", params: valid_attributes }
+    before { put "/categories/#{category_id}/nominations/#{id}", params: valid_attributes, headers: headers }
 
     context 'when nomination exists' do
       it 'returns status code 204' do
@@ -110,15 +112,15 @@ RSpec.describe 'Nomination API' do
         expect(response).to have_http_status(404)
       end
 
-      # it 'returns a not found message' do
-      #   expect(response.body).to match(/Couldn't find nomination/)
-      # end
+      it 'returns a not found message' do
+        expect(response.body).to match(/Couldn't find/)
+      end
     end
   end
 
   # Test suite for DELETE /categories/:id
   describe 'DELETE /categories/:id' do
-    before { delete "/categories/#{category_id}/nominations/#{id}" }
+    before { delete "/categories/#{category_id}/nominations/#{id}", params: {}, headers: headers }
 
     it 'returns status code 204' do
       expect(response).to have_http_status(204)

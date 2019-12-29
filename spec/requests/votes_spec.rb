@@ -2,16 +2,18 @@ require 'rails_helper'
 
 RSpec.describe 'Vote API' do
   # Initialize the test data
-  let!(:category) { create(:category) }
-  let!(:nomination) { create(:nomination, category_id: category.id) }
-  let!(:votes) { create_list(:vote, 20, nomination_id: nomination.id) }
+  let(:user) { create(:user) }
+  let!(:category) { create(:category, created_by: user.id) }
+  let!(:nomination) { create(:nomination, category_id: category.id, created_by: user.id) }
+  let!(:votes) { create_list(:vote, 20, nomination_id: nomination.id, created_by: user.id) }
 
   let(:category_id) { category.id }
   let(:nomination_id) { nomination.id }
   let(:id) { votes.first.id }
+  let(:headers) { valid_headers }
 
   describe 'GET /categories/:category_id/nominations/:nomination_id/votes' do
-    before { get "/categories/#{category_id}/nominations/#{nomination_id}/votes" }
+    before { get "/categories/#{category_id}/nominations/#{nomination_id}/votes", params: {}, headers: headers }
 
     context 'when nomination exists' do
       it 'returns status code 200' do
@@ -37,7 +39,7 @@ RSpec.describe 'Vote API' do
   end
 
   describe 'GET /categories/:category_id/nominations/:nomination_id/votes/:id' do
-    before { get "/categories/#{category_id}/nominations/#{nomination_id}/votes/#{id}" }
+    before { get "/categories/#{category_id}/nominations/#{nomination_id}/votes/#{id}", params: {}, headers: headers }
 
     context 'when vote exists' do
       it 'returns status code 200' do
@@ -63,10 +65,10 @@ RSpec.describe 'Vote API' do
   end
 
   describe 'POST /categories/:category_id/nominations/:nomination_id/votes' do
-    let(:valid_attributes) { { created_by: '2', nomination_id: nomination_id } }
+    let(:valid_attributes) { { created_by: user.id, nomination_id: nomination_id }.to_json }
 
     context 'when request attributes are valid' do
-      before { post "/categories/#{category_id}/nominations/#{nomination_id}/votes", params: valid_attributes }
+      before { post "/categories/#{category_id}/nominations/#{nomination_id}/votes", params: valid_attributes, headers: headers }
 
       it 'returns status code 201' do
         expect(response).to have_http_status(201)
@@ -74,7 +76,7 @@ RSpec.describe 'Vote API' do
     end
 
     context 'when an invalid request' do
-      before { post "/categories/#{category_id}/nominations/#{nomination_id}/votes", params: {} }
+      before { post "/categories/#{category_id}/nominations/#{nomination_id}/votes", params: {}, headers: headers }
 
       it 'returns status code 422' do
         expect(response).to have_http_status(422)
@@ -87,7 +89,7 @@ RSpec.describe 'Vote API' do
   end
 
   describe 'DELETE /categories/:category_id/nominations/:nomination_id/votes/:id' do
-    before { delete "/categories/#{category_id}/nominations/#{nomination_id}/votes/#{id}" }
+    before { delete "/categories/#{category_id}/nominations/#{nomination_id}/votes/#{id}", params: {}, headers: headers }
 
     it 'returns status code 204' do
       expect(response).to have_http_status(204)
